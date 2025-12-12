@@ -1,0 +1,28 @@
+# Core Dependencies
+# IMPORTANT: PyTorch 1.12.0 is required for SCHP C++ extensions compatibility
+# PyTorch 2.0+ removed deprecated APIs (tensor.type(), tensor.data<T>()) used by SCHP
+# Using CPU-only version to avoid CUDA linking issues with CPU-only extensions
+# NOTE: PyTorch CPU-only packages are installed separately in setup.sh
+# They require: pip install torch==1.12.0+cpu torchvision==0.13.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+# For requirements.txt compatibility, we list them without +cpu suffix
+# but setup.sh will install the CPU-only versions
+torch==1.12.0
+torchvision==0.13.0
+Pillow>=8.0.0
+numpy>=1.19.0,<2.0.0  # Compatible with PyTorch 1.12, must be <2.0 for SCHP extensions
+opencv-python>=4.5.0
+pyyaml>=5.4.0
+tqdm>=4.60.0
+ninja>=1.10.0  # Required for C++ extension compilation
+
+# HTTP API Server
+fastapi>=0.104.0  # FastAPI for async API server
+uvicorn[standard]>=0.24.0  # ASGI server for FastAPI
+python-multipart>=0.0.6  # Required for FastAPI form data
+aiofiles>=23.2.0  # Async file operations
+aiohttp>=3.8.0  # Async HTTP client for callbacks
+tenacity>=8.2.0  # Retry library with exponential backoff
+
+# Storage (for model download from S3 - optional)
+minio>=7.2.0  # MinIO client library (for S3 model download)
+boto3>=1.26.0  # AWS S3 client library (for model upload/download)

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  schp-parser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: schp-parser
+    restart: unless-stopped
+    # Required for PyTorch 1.12.0 to work in Docker (executable stack issue)
+    # Using privileged mode as it works reliably with Ubuntu base image
+    privileged: true
+    environment:
+      # Device configuration
+      - SCHP_DEVICE=${SCHP_DEVICE:-cpu}
+      
+      # Model S3 Configuration (optional - if using S3 for models)
+      - MODEL_S3_ENABLED=${MODEL_S3_ENABLED:-true}
+      - MODEL_S3_ENDPOINT=${MODEL_S3_ENDPOINT:-s3.amazonaws.com}
+      - MODEL_S3_ACCESS_KEY=${MODEL_S3_ACCESS_KEY:-AKIAY7HHH2NXLYLUKYWQ}
+      - MODEL_S3_SECRET_KEY=${MODEL_S3_SECRET_KEY:-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}
+      - MODEL_S3_BUCKET=${MODEL_S3_BUCKET:-xapienappassets}
+      - MODEL_S3_PREFIX=${MODEL_S3_PREFIX:-models/}
+      - MODEL_S3_REGION=${MODEL_S3_REGION:-ap-south-1}
+      
+      # Kafka Configuration (from config.yaml or env vars)
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-192.168.86.2:9092}
+      
+      # MinIO/S3 Configuration (from config.yaml or env vars)
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-s3.amazonaws.com}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-AKIAY7HHH2NXLYLUKYWQ}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-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}
+      - MINIO_BUCKET=${MINIO_BUCKET:-xapienprodsecure}
+      - MINIO_SECURE=${MINIO_SECURE:-true}
+      
+      # PostgreSQL Configuration (from config.yaml or env vars)
+      - POSTGRES_HOST=${POSTGRES_HOST:-192.168.86.2}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-fashionx}
+      - POSTGRES_USER=${POSTGRES_USER:-nihal}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-fashionx4031}
+    
+    volumes:
+      # Mount config file (or use environment variables)
+      - ./config:/app/config:ro
+      # Optional: Mount models directory if not using S3
+      # - ./models:/app/models:ro
+      # Logs directory
+      - ./logs:/app/logs
+      # Temp directory
+      - schp_temp:/tmp/schp_parser
+      # Test images (for testing)
+      - ./test_images:/app/test_images:ro
+    
+    networks:
+      - schp-network
+    
+    # Expose API port
+    ports:
+      - "8080:8080"  # HTTP API server
+    
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3.10", "-c", "import torch; import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  schp_temp:
+
+networks:
+  schp-network:
+    driver: bridge
+

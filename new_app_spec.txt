@@ -1,0 +1,256 @@
+QWEN MASK COMPONENT — FULL MICROSERVICE SPECIFICATION (v1.1)
+Human Parsing & Body-Region Mask Generator (Qwen-based)
+With Internal Async Queue, FIFO Ordering, and Secure Callback
+1️⃣ MICROSERVICE PURPOSE
+
+The Qwen Mask Component creates:
+
+upper-body mask
+
+lower-body mask
+
+These masks are optimized for Qwen-based virtual try-on pipelines that need strong garment localization and separation of torso vs legs.
+
+This service:
+
+Receives user image
+
+Runs Qwen-based segmentation model
+
+Generates masks
+
+Uploads results to the Mask Asset Service
+
+Uses X-Internal-Auth header
+
+Processes multiple jobs via an internal FIFO queue
+
+2️⃣ MICROSERVICE OVERVIEW
+Property	Value
+Name	qwen-mask-component
+Type	CPU (or GPU optional)
+Framework	FastAPI (async)
+Processing Model	Internal FIFO queue + background workers
+Workers	configurable (default: 2)
+Input	multipart/form-data image, user_id, job_id, provider="qwen"
+Output	upper_body_mask.png, lower_body_mask.png
+Callback	Mask Asset Service
+3️⃣ ENDPOINTS
+POST /process
+
+Accepts job instantly → pushes to queue.
+
+Request
+user_image: <file>
+user_id: str
+job_id: str
+provider: "qwen"
+
+Response (immediate)
+{
+  "status": "accepted",
+  "queued": true,
+  "job_id": "f20d-441e-a7db...",
+  "message": "Job added to Qwen mask queue"
+}
+
+GET /health
+
+Provides basic uptime info.
+
+Response:
+
+{ "status": "ok", "queue_size": 3 }
+
+GET /stats
+
+System metrics:
+
+{
+  "queue_max": 100,
+  "queue_current": 3,
+  "workers": 2,
+  "jobs_processed": 441,
+  "uptime_sec": 8420
+}
+
+4️⃣ INTERNAL QUEUE (FIFO GUARANTEED)
+
+Implementation: asyncio.Queue
+
+Queue Properties
+QUEUE_MAX_SIZE = 100
+WORKER_COUNT = 2
+FIFO ORDER = YES (strict)
+
+Behavior
+
+/process request → enqueue
+
+Workers pull jobs in exact FIFO order
+
+Parallel execution possible with multiple workers
+
+Completion order may vary, but start order is FIFO
+
+5️⃣ WORKER PIPELINE
+
+Each worker executes:
+
+[1] Fetch job from FIFO queue
+[2] Load and preprocess image
+[3] Run Qwen segmentation model (torch or onnx)
+[4] Generate:
+        - upper_body_mask.png
+        - lower_body_mask.png
+[5] Save masks to temp folder
+[6] Upload masks → Mask Asset Service
+[7] Cleanup
+[8] Log success/fail
+
+6️⃣ MASK TYPES GENERATED
+File	Description
+upper_body_mask.png	Shoulders → chest → arms → torso
+lower_body_mask.png	Hips → legs → calves
+seg_map.png (optional)	Raw segmentation index map
+
+Only keep 2 masks mandatory unless you want the raw map.
+
+7️⃣ CALLBACK TO MASK ASSET SERVICE
+POST → {MASK_ASSET_URL}
+Headers
+X-Internal-Auth: <MASK_COMPONENT_SECRET>
+Content-Type: multipart/form-data
+
+Body
+user_id
+job_id
+provider = "qwen"
+
+Files
+upper_body_mask.png
+lower_body_mask.png
+
+
+Optional:
+
+seg_map.png
+
+Success Response
+{
+  "status": "success",
+  "stored_keys": {
+    "upper_body_mask": "minio://..",
+    "lower_body_mask": "minio://.."
+  }
+}
+
+
+If callback fails → retry:
+
+attempts: 5
+backoff: exponential
+delays: 1s → 2s → 4s → 8s → 16s
+
+8️⃣ ENVIRONMENT VARIABLES
+PORT=8003
+HOST=0.0.0.0
+
+# Queue config
+QUEUE_MAX_SIZE=100
+WORKER_COUNT=2
+
+# Mask asset callback
+MASK_ASSET_URL=https://apiprod.xapien.in:9002/v1/mask/upload
+MASK_COMPONENT_SECRET=supersecret-internal-token
+
+# Qwen model paths
+MODEL_FOLDER=/app/checkpoints
+QWEN_MODEL_PATH=qwen_segmentation.onnx   # or pytorch
+
+# Temporary folder
+TEMP_FOLDER=/tmp/qwen
+
+LOG_LEVEL=INFO
+
+9️⃣ FOLDER STRUCTURE
+qwen-mask-component/
+│── app.py
+│── routers/
+│   └── process.py
+│── services/
+│   ├── qwen_segmentation.py
+│   ├── mask_builder.py
+│   ├── callback_service.py
+│── workers/
+│   ├── queue_worker.py
+│── checkpoints/
+│   └── qwen_segmentation.onnx
+│── utils/
+│   ├── image_utils.py
+│   ├── logger.py
+│── Dockerfile
+│── requirements.txt
+│── README.md
+
+🔟 DOCKERFILE (STANDARD)
+
+Same pattern as Flex component:
+
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENV PORT=8003
+EXPOSE 8003
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8003"]
+
+1️⃣1️⃣ ERROR HANDLING
+Error type	Behavior
+Missing input fields	return 400
+Invalid image file	return 422
+Qwen model load failure	service startup fails
+Worker error	log error → continue
+Queue full	return 429
+Callback fails	retry 5×
+Disk full	log + error returned
+1️⃣2️⃣ PERFORMANCE TARGETS
+Stage	Target
+Preprocessing	< 80ms
+Segmentation (CPU)	200–350ms
+Mask construction	< 50ms
+Callback upload	< 200ms
+Total (per job)	0.5–0.8 seconds
+
+With 2 workers: ~2 jobs per second
+
+1️⃣3️⃣ SECURITY
+
+✔ Uses secure X-Internal-Auth header
+✔ No public mask storage
+✔ Strict file type validation
+✔ Stateless & horizontally scalable
+
+⭐ QWEN MASK COMPONENT SPEC v1.1 — COMPLETE
+
+This component is now:
+
+Production-ready
+
+Stable
+
+Scalable
+
+FIFO-safe
+
+Integrated with your pipeline
+
+Parallelizable
+
+Matching the Flex component architecture

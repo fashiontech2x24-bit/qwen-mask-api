@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+test_*.py
+*_test.py
+tests/
+test_*/
+
+# Documentation
+*.md
+!README.md
+!INTEGRATION_README.md
+!QUICKSTART.md
+!INSTALL.md
+!PRODUCTION_SUMMARY.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Outputs
+outputs/
+test_outputs/
+
+# Models (will be downloaded from S3)
+models/*.pth
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Temporary files
+*.tmp
+.cache/
+newsample/
+
+# OS
+.DS_Store
+Thumbs.db
+
+

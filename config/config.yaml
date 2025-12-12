@@ -1,0 +1,56 @@
+# Qwen Mask Component Configuration
+
+# Model Configuration
+model:
+  name: "atr"  # Options: atr, lip, pascal
+  checkpoint_path: "models/exp-schp-201908301523-atr.pth"
+  num_classes: 18  # ATR: 18, LIP: 20, Pascal: 7
+  input_size: [512, 512]  # Input size for model (ATR: 512, LIP: 473, Pascal: 512)
+  device: "cpu"  # Options: "auto" (auto-detect), "cuda" (force GPU), "cpu" (force CPU)
+  # NOTE: Set to "cpu" to avoid CUDA compilation issues if nvcc is not available
+  use_gpu: false  # Deprecated: use 'device' instead, kept for backward compatibility
+  gpu_id: 0  # GPU device ID (only used if device="cuda" or use_gpu=true)
+  
+  # S3 Model Storage (optional - for production deployments)
+  # If enabled, models will be downloaded from S3/MinIO on first use
+  # Supports both AWS S3 and MinIO
+  # NOTE: Uses xapienappassets bucket for model storage
+  s3:
+    enabled: true  # Set to true to enable S3 model download
+    endpoint: "s3.amazonaws.com"  # S3 endpoint: "s3.amazonaws.com" (AWS) or "192.168.86.2:9000" (MinIO)
+    access_key: "${AWS_ACCESS_KEY_ID}"  # Set via AWS_ACCESS_KEY_ID environment variable
+    secret_key: "${AWS_SECRET_ACCESS_KEY}"  # Set via AWS_SECRET_ACCESS_KEY environment variable
+    bucket: "xapienappassets"  # S3 bucket name for models
+    prefix: "models/"  # S3 prefix/path where models are stored (e.g., "models/" means s3://bucket/models/file.pth)
+    secure: true  # Use HTTPS (true for AWS S3, false for MinIO HTTP)
+    region: "ap-south-1"  # AWS region (ap-south-1 for xapienappassets bucket)
+
+# Processing Configuration
+processing:
+  # General settings
+  preserve_resolution: true  # Preserve original image resolution
+  debug: false  # Enable debug mode
+
+# Label Configuration (ATR)
+labels:
+  upper_body: [4, 7]  # upper_clothes and dress
+  lower_body: [5, 6, 7]  # skirt, pants, and dress
+  
+# Paths
+paths:
+  models_dir: "models"
+  outputs_dir: "outputs"
+  logs_dir: "logs"
+  cache_dir: ".cache"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "json"  # json, text
+  file: "logs/parser.log"
+  console: true
+
+# Error Handling
+error_handling:
+  max_retries: 3  # Max retries on failure
+  timeout: 30  # Timeout in seconds
