@@ -86,10 +86,12 @@ void leaky_relu_backward_cpu(at::Tensor z, at::Tensor dz, float slope) {
   CHECK_CPU_INPUT(z);
   CHECK_CPU_INPUT(dz);
 
-  AT_DISPATCH_FLOATING_TYPES(z.type(), "leaky_relu_backward_cpu", ([&] {
+  // Use scalar_type() instead of deprecated type()
+  AT_DISPATCH_FLOATING_TYPES(z.scalar_type(), "leaky_relu_backward_cpu", ([&] {
     int64_t count = z.numel();
-    auto *_z = z.data<scalar_t>();
-    auto *_dz = dz.data<scalar_t>();
+    // Use data_ptr<T>() instead of deprecated data<T>()
+    auto *_z = z.data_ptr<scalar_t>();
+    auto *_dz = dz.data_ptr<scalar_t>();
 
     for (int64_t i = 0; i < count; ++i) {
       if (_z[i] < 0) {
@@ -104,10 +106,12 @@ void elu_backward_cpu(at::Tensor z, at::Tensor dz) {
   CHECK_CPU_INPUT(z);
   CHECK_CPU_INPUT(dz);
 
-  AT_DISPATCH_FLOATING_TYPES(z.type(), "elu_backward_cpu", ([&] {
+  // Use scalar_type() instead of deprecated type()
+  AT_DISPATCH_FLOATING_TYPES(z.scalar_type(), "elu_backward_cpu", ([&] {
     int64_t count = z.numel();
-    auto *_z = z.data<scalar_t>();
-    auto *_dz = dz.data<scalar_t>();
+    // Use data_ptr<T>() instead of deprecated data<T>()
+    auto *_z = z.data_ptr<scalar_t>();
+    auto *_dz = dz.data_ptr<scalar_t>();
 
     for (int64_t i = 0; i < count; ++i) {
       if (_z[i] < 0) {
