@@ -168,17 +168,40 @@ if ! command -v ninja &> /dev/null; then
     pip install ninja
 fi
 
-# Download models (optional - user can do this manually)
+# Download models from S3 (if credentials are set)
 echo ""
 echo "=========================================="
 echo "Model Download"
 echo "=========================================="
-echo "Models need to be downloaded manually:"
-echo ""
-echo "ATR Model (Recommended):"
-echo "  https://drive.google.com/file/d/1ruJg4lqR_jgQPj-9K1j6XmTd3yisGXq7/view"
-echo "  Save as: models/exp-schp-201908301523-atr.pth"
-echo ""
+
+if [ -f "models/exp-schp-201908301523-atr.pth" ]; then
+    echo "✓ Model already exists: models/exp-schp-201908301523-atr.pth"
+elif [ -n "$MODEL_S3_ACCESS_KEY" ] && [ -n "$MODEL_S3_SECRET_KEY" ]; then
+    echo "Downloading model from S3..."
+    ./scripts/download_models_s3.sh || {
+        echo "⚠️  Model download failed, but setup will continue."
+        echo "   You can download manually or run: ./scripts/download_models_s3.sh"
+    }
+elif [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+    echo "Downloading model from S3 (using AWS credentials)..."
+    export MODEL_S3_ACCESS_KEY="$AWS_ACCESS_KEY_ID"
+    export MODEL_S3_SECRET_KEY="$AWS_SECRET_ACCESS_KEY"
+    ./scripts/download_models_s3.sh || {
+        echo "⚠️  Model download failed, but setup will continue."
+        echo "   You can download manually or run: ./scripts/download_models_s3.sh"
+    }
+else
+    echo "No S3 credentials found. To download the model:"
+    echo ""
+    echo "Option 1 - Set credentials and run download script:"
+    echo "  export MODEL_S3_ACCESS_KEY=\"your-access-key\""
+    echo "  export MODEL_S3_SECRET_KEY=\"your-secret-key\""
+    echo "  ./scripts/download_models_s3.sh"
+    echo ""
+    echo "Option 2 - Download manually:"
+    echo "  https://drive.google.com/file/d/1ruJg4lqR_jgQPj-9K1j6XmTd3yisGXq7/view"
+    echo "  Save as: models/exp-schp-201908301523-atr.pth"
+fi
 
 # Test imports
 echo "=========================================="
