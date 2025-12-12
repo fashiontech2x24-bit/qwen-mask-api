@@ -7,7 +7,7 @@ cd /home/fashionx/qwenmask/qwen-mask-api
 source venv/bin/activate
 
 # Set environment variables (if not already set)
-export MASK_ASSET_URL=${MASK_ASSET_URL:-"http://13.62.127.241:9002/v1/mask/upload"}
+export MASK_ASSET_URL=${MASK_ASSET_URL:-"http://13.60.237.183:9009/v1/mask/upload"}
 export MASK_COMPONENT_SECRET=${MASK_COMPONENT_SECRET:-"supersecret-internal-token"}
 export PORT=${PORT:-8003}
 export HOST=${HOST:-"0.0.0.0"}
