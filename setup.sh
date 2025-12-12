@@ -140,6 +140,29 @@ if ! command -v g++ &> /dev/null; then
     echo "Install with: sudo apt-get install build-essential"
 fi
 
+# Check for Python development headers (Python.h)
+PYTHON_VERSION=$(python --version 2>&1 | awk '{print $2}' | cut -d. -f1,2)
+PYTHON_INCLUDE_DIR="/usr/include/python${PYTHON_VERSION}"
+if [ ! -f "${PYTHON_INCLUDE_DIR}/Python.h" ]; then
+    echo ""
+    echo "⚠️  Python development headers not found!"
+    echo "   Required file: ${PYTHON_INCLUDE_DIR}/Python.h"
+    echo ""
+    echo "Installing python${PYTHON_VERSION}-dev..."
+    if command -v apt-get &> /dev/null; then
+        apt-get update && apt-get install -y python${PYTHON_VERSION}-dev || {
+            echo "Failed to install automatically. Please run:"
+            echo "  sudo apt-get install python${PYTHON_VERSION}-dev"
+            exit 1
+        }
+    else
+        echo "Please install Python development headers manually:"
+        echo "  Ubuntu/Debian: sudo apt-get install python${PYTHON_VERSION}-dev"
+        echo "  Fedora/RHEL:   sudo dnf install python${PYTHON_VERSION}-devel"
+        exit 1
+    fi
+fi
+
 if ! command -v ninja &> /dev/null; then
     echo "Installing ninja (required for PyTorch extensions)..."
     pip install ninja
