@@ -51,6 +51,6 @@ echo "Mask Asset URL: $MASK_ASSET_URL"
 echo "S3 Model Enabled: $MODEL_S3_ENABLED"
 echo "=========================================="
 echo ""
-
+source ./venv/bin/activate
 # Start the service using python -m uvicorn (more reliable than direct uvicorn command)
 python -m uvicorn app:app --host "$HOST" --port "$PORT"
