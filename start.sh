@@ -9,7 +9,7 @@ cd "$SCRIPT_DIR"
 source venv/bin/activate
 
 # Set environment variables (if not already set)
-export MASK_ASSET_URL=${MASK_ASSET_URL:-"http://13.60.242.64:9009/v1/mask/upload"}
+export MASK_ASSET_URL=${MASK_ASSET_URL:-"http://51.20.86.26:9009/v1/mask/upload"}
 export MASK_COMPONENT_SECRET=${MASK_COMPONENT_SECRET:-"supersecret-internal-token"}
 export PORT=${PORT:-8003}
 export HOST=${HOST:-"0.0.0.0"}
