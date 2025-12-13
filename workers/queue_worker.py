@@ -123,11 +123,12 @@ async def process_job(job: Job, segmentation_service: QwenSegmentationService):
         # [3] Run segmentation
         parse_image, metadata = segmentation_service.parse_image(str(input_path))
         
-        # [4] Generate masks
+        # [4] Generate green bounding box masks
         upper_path, lower_path = generate_masks(
             parse_image=parse_image,
             output_dir=output_dir,
-            job_id=job.job_id
+            job_id=job.job_id,
+            original_image_path=str(input_path)
         )
         
         # Optional: Save seg_map
